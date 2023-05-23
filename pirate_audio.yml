@@ -1,0 +1,55 @@
+---
+- hosts: raspberrypi
+  gather_facts: False
+  tasks:
+    - name: Install Python Libraries and Dependencies
+      apt:
+        update_cache: yes
+        name:
+          - python-rpi.gpio
+          - python-spidev
+          - python-pip
+          - python-pil
+          - python-numpy
+        state: present
+
+    - name: Install st7789 library via pip
+      pip:
+        name: st7789
+
+    - name: Clone Pirate Audio repository
+      git:
+        repo: 'https://github.com/pimoroni/pirate-audio.git'
+        dest: '/home/pi/pirate-audio'
+    
+    - name: Run the install script
+      command: './install.sh'
+      args:
+        chdir: '/home/pi/pirate-audio/mopidy'
+
+    - name: Reboot Raspberry Pi
+      reboot:
+
+    - name: Add hifiberry-dac overlay to /boot/config.txt
+      lineinfile:
+        path: /boot/config.txt
+        line: 'dtoverlay=hifiberry-dac'
+        state: present
+
+    - name: Add gpio setting to /boot/config.txt
+      lineinfile:
+        path: /boot/config.txt
+        line: 'gpio=25=op,dh'
+        state: present
+
+    - name: Disable onboard audio in /boot/config.txt
+      lineinfile:
+        path: /boot/config.txt
+        line: 'dtparam=audio=off'
+        state: present
+
+    - name: Add adau7002-simple overlay to /boot/config.txt for Dual Mic
+      lineinfile:
+        path: /boot/config.txt
+        line: 'dtoverlay=adau7002-simple'
+        state: present
